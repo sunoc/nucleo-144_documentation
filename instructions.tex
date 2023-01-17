@@ -14,7 +14,7 @@
 % in a listing. Uses $\dollar$ instead
 \newcommand{\dollar}{\mbox{\textdollar}}
 
-\title{Setting up and using the Nucleo-144 board \\[1ex] \large \begin{CJK}{UTF8}{min}南山大学\end{CJK}}
+\title{Setting up and using micro-ROS the Nucleo-144 \\[1ex] \large \begin{CJK}{UTF8}{min}南山大学\end{CJK}}
 \date{}
 \author{Vincent Conus}
 
@@ -30,5 +30,97 @@
 \pagebreak
 %--------------------------------------------------------------------------------------
 \section{Introduction and motivation}
+Running a micro-ROS instance on this board is a useful goal in the overall project, as it will
+allow me to test the ``standard'' use-case of that technology.
+
+%--------------------------------------------------------------------------------------
+\section{Blinking a LED}
+\label{sec:blinking-led}
+When working with a microcontroller, this is always the first step to be taken
+in order to know that the board is working and that our toolchain is properly
+configured to upload a firmware to the board.
+
+\subsection{STM32CubeIDE}
+\label{sec:stm32cubeide}
+Similarly to what presented in \href{https://gitlab.com/stm32mp157f-dk2/documentation}{my documentation for the STM32MP157F board}, the current Nucleo board projects can also be edited and loaded through serial connection from the \href{https://www.st.com/en/development-tools/stm32cubeide.html}{STM32 Cube IDE}. This tool has the advantage of being directly provided by ST and having a lot of available functionality for building and debugging project, however, such project are extremely inconvenient to move and are close to impossible to port.\\
+
+Regardless, this is way we shall take for this guide, so as visible on the figure \ref{fig:ide} we are going to use the tool provided by ST to build and upload the firmware for our Nucleo board. The link in the previous paragraph explains how to install it.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.8\textwidth]{./img/ide.png}
+  \caption{The STM Cube IDE view, with a project opened}
+  \label{fig:ide}
+\end{figure}
+
+\subsection{STM32F7 firmware package}
+\label{sec:stm32f7-firmw-pack}
+With the IDE ready to be used, we now have to get the firmware package for our board.
+Since the Nucleo board we have is running a STM32F processor, we will need the similarly named pack.\\
+
+The \href{https://www.st.com/content/st_com/en/products/embedded-software/mcu-mpu-embedded-software/stm32-embedded-software/stm32cube-mcu-mpu-packages/stm32cubef7.html}{STM32 cube F7 firmware package} is available at that link. Once the whole directory is download and decompressed, you can access all the template projects, navigating to the following directory (dependent on your actual version): \verb|./STM32Cube_FW_F7_vX.XX.X/Projects/STM32F746ZG-Nucleo/|. In particular, for our case as we want firstly to be able to blink an LED, we can navigate to further, into \verb|Examples/GPIO/GPIO_IOToggle|. This specific example is precisely what we want: a simple structure of a project that blinks the \verb|LED1| LED.
+
+\subsection{Building and running the GPIO example}
+\label{sec:build-runn-gpio}
+The project downloaded as the F7 firmware, named \verb|GPIO_IOToggle| can be loaded into the IDE.
+From the IDE interface, you can use \verb|File|, then \verb|Import...|, and then \verb|Existing Projects into Workspace|, as visible in the figure \ref{fig:import}. Then, as visible in the figure \ref{fig:project}, we can navigate to the \verb|GPIO_IOToggle| directory and open it as a project. You should have two nested project that can be imported here.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.55\textwidth]{./img/import.png}
+  \caption{Importing an existing project from the filesystem}
+  \label{fig:import}
+\end{figure}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.55\textwidth]{./img/project.png}
+  \caption{Importing the nested GPIO projects}
+  \label{fig:project}
+\end{figure}
+
+The project being imported, we can now see it's structure in the explorer of the IDE (figure \ref{fig:tree}). It also becomes clear here too why these STM Cube IDE are problematic to handle: even for such a simple task like the LED blink, a whole structure of inclusions and library that are elsewhere are needed.\\
+
+However, with the Nucleo board plugged in the USB port of you computer, and by selecting the \verb|STM32746ZG| sub-project, you can build the example (hammer icon), and then run it (white arrow on a green dot icon).\\
+As visible in the figure \ref{fig:toggle_led}, if you navigate around the line 90 of the \verb|main.c| file, you will find a delay function that takes some milliseconds in entry parameter. By changing that value, you are able to check if the code you are building is indeed being uploaded to the board.\\
+
+With this setup, you should be able to build the example and having the LD1 LED on the top of your Nucleo board to blink.
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=0.9\textwidth]{./img/tree.png}
+  \caption{GPIO project structure}
+  \label{fig:tree}
+\end{figure}
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=0.9\textwidth]{./img/toggle_led.png}
+  \caption{``while'' loop with the toggling timing for the LD1 LED}
+  \label{fig:toggle_led}
+\end{figure}
+
+\pagebreak
+% --------------------------------------------------------------------------------------
+\section{micro-ROS}
+\label{sec:micro-ros}
+Now we have a minimal project running on our Nucleo board, it's time to try, deploy and run a micro-ROS instance.
+Deploying micro-ROS on a microcontroller is not a trivial task, as the firmware that is meant to be compiled and sent over must contain at least:
+\begin{itemize}
+\item The specific drivers for the board
+\item A real-time operating system, most likely FreeRTOS
+\item The micro-ROS layer itself
+\item The program that will use this micro-ROS environment
+\end{itemize}
+
+Furthermore, it is every more hard to debug such deployment, since a micro-ROS is only visible as it communicates with a full-on ROS2 system.
+
+\subsection{Local Linux micro-ROS}
+\label{sec:local-linux-micro}
+
+\subsection{micro-ROS on a microcontroller}
+\label{sec:micro-ros-micr}
+
+
 
 \end{document}
