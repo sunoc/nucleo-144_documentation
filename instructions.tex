@@ -115,12 +115,70 @@ Deploying micro-ROS on a microcontroller is not a trivial task, as the firmware 
 
 Furthermore, it is every more hard to debug such deployment, since a micro-ROS is only visible as it communicates with a full-on ROS2 system.
 
-\subsection{Local Linux micro-ROS}
+\subsection{Local Linux micro-ROS running a ping-pong test app}
 \label{sec:local-linux-micro}
+The first step in the path of running micro-ROS, we should try to run a ping-pong application on my Linux machine.
+Some instructions for this particular task are given on \href{https://micro.ros.org/docs/tutorials/core/first_application_linux/}{micro-ROS website}.
+Alternatively, there is a \href{}{micro-ROS report prepared by Prof. Honda}, available on this very repository.\\
+
+In this section of the report about the Nucleo board, I will present a tested, combined step-by-step guide on how to accomplish this task.\\
+
+Docker is used in both guides to have a controlled environment to build and run these test tools.
+It is then important to install it on your system (or even remotely). \href{https://docs.docker.com/engine/install/}{The official Docker documentation} is the way to go, and it depends on your operating system. Even on your desktop, the version you'd want is the ``server'' version, as it is more widely available and more lightweight. From here I will assume that you have a docker install handy.\\
+
+
+The following commands will pull a ROS container, version \verb|foxy|, and name it \verb|ros_build|.
+Then, we can execute \verb|bash|, as a way to open a terminal to the ``inside'' of the container.
+\begin{tcolorbox}
+\begin{verbatim}
+sudo docker run -d --name ros_build -it --net=host -v \
+     /dev:/dev --privileged ros:foxy
+sudo docker exec -it ros_build bash
+\end{verbatim}
+\end{tcolorbox}
+
+
+From inside the container, we can follow the micro-ROS wiki guide, as to have two micro-ROS nodes that can run a default ``ping-pong'' application, as a proof that the system works and that the instances are able to communicated with each other.
+\begin{tcolorbox}
+\begin{verbatim}
+. /opt/ros/$ROS_DISTRO/setup.bash
+
+mkdir microros_ws
+cd microros_ws
+git clone -b $ROS_DISTRO \
+    https://github.com/micro-ROS/micro_ros_setup.git \
+    src/micro_ros_setup
+
+sudo apt update && rosdep update
+rosdep install --from-paths src --ignore-src -y
+sudo apt-get -y install python3-pip wget nano
+
+colcon build
+. ./install/local_setup.bash
+
+ros2 run micro_ros_setup create_firmware_ws.sh host
+
+ros2 run micro_ros_setup build_firmware.sh
+. ./install/local_setup.bash
+
+ros2 run micro_ros_setup create_agent_ws.sh
+ros2 run micro_ros_setup build_agent.sh
+. ./install/local_setup.bash
+
+ros2 run micro_ros_agent micro_ros_agent udp4 --port 8888
+\end{verbatim}
+\end{tcolorbox}
 
 \subsection{micro-ROS on a microcontroller}
 \label{sec:micro-ros-micr}
 
-
+It is possible to view the Nucleo board as a mountable volume by plugging in the \verb|USB PWR| port to your machine. The \verb|/dev/sdX| will be mounted as something similar to \verb|/media/user/NODE_F746ZG|.\\
+It is also an option to mount this device from inside a Docker, for example with the following:
+\begin{tcolorbox}
+\begin{verbatim}
+mkdir /tmp/nucleo
+mount /dev/sda /tmp/nucleo
+\end{verbatim}
+\end{tcolorbox}
 
 \end{document}
