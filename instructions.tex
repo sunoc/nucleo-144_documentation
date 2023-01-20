@@ -171,6 +171,32 @@ ros2 run micro_ros_agent micro_ros_agent udp4 --port 8888
 
 \subsection{micro-ROS on a microcontroller}
 \label{sec:micro-ros-micr}
+Now we know that we can build micro-ROS agents, the goal is to build a firmware for our Nucleo board that can talk to our PC via serial.
+This should be possible following the \href{https://micro.ros.org/docs/tutorials/core/first_application_rtos/freertos/}{official guide} since the board is \href{https://micro.ros.org/docs/overview/hardware/}{officially supported}.
+
+
+\begin{tcolorbox}
+\begin{verbatim}
+git clone -b \
+    galactic https://github.com/micro-ROS/micro_ros_stm32cubemx_utils.git \
+    /project
+
+ros2 run micro_ros_setup create_firmware_ws.sh freertos nucleo_f746zg
+
+ros2 run micro_ros_setup configure_firmware.sh ping_pong --transport serial
+
+ros2 run micro_ros_setup build_firmware.sh
+
+cp firmware/freertos_apps/microros_nucleo_f746zg_extensions/build/micro-ROS.bin /tmp/nucleo/
+\end{verbatim}
+\end{tcolorbox}
+
+Now to have the local agent connecting to the topic, you can run the following command, and then plug-out and plug-in the usb cable:
+\begin{tcolorbox}
+\begin{verbatim}
+ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyACM0
+\end{verbatim}
+\end{tcolorbox}
 
 It is possible to view the Nucleo board as a mountable volume by plugging in the \verb|USB PWR| port to your machine. The \verb|/dev/sdX| will be mounted as something similar to \verb|/media/user/NODE_F746ZG|.\\
 It is also an option to mount this device from inside a Docker, for example with the following:
