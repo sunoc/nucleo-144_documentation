@@ -224,8 +224,8 @@ build/micro-ROS.bin /tmp/nucleo/
 Now to have the local agent connecting to the topic, you can run the following command, and then plug-out and plug-in the usb cable:
 \begin{tcolorbox}
 \begin{verbatim}
-ros2 run micro_ros_agent micro_ros_agent serial\
- --dev /dev/ttyACM0
+ros2 run micro_ros_agent micro_ros_agent serial \
+--dev /dev/ttyACM0
 \end{verbatim}
 \end{tcolorbox}
 
@@ -268,5 +268,14 @@ Finally, for testing this application, you can bash into the Docker from another
 ros2 topic echo /microROS/ping
 \end{verbatim}
 \end{tcolorbox}
+
+\subsection{=TODO= Usage with N8M}
+\label{sec:usage-with-n8m}
+As the micro-ROS deployed system appear to work properly,it will become interesting
+to make the board able to ``talk'' with my other Nitrogen8M ROS2 deployment.\\
+
+This is a good exercise to see if everything works as expected, especially at
+the DDS level.
+
 
 \end{document}
