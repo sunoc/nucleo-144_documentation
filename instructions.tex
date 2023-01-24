@@ -30,8 +30,10 @@
 \pagebreak
 %--------------------------------------------------------------------------------------
 \section{Introduction and motivation}
+Being a widely available board from ST and with an official support for micro-ROS, the Nucleo-144 is a great board as an intermediate step on the journey to have a ROS2 ecosystem running on a system like the \href{https://gitlab.com/nitrogen8m/documentation}{Nitrogen8M} with an heterogeneous cores setup.\\
 Running a micro-ROS instance on this board is a useful goal in the overall project, as it will
-allow me to test the ``standard'' use-case of that technology.
+allow me to test the ``standard'' use-case of that technology.\\
+Later on, the goal will be to be able to run the DDS system over RPMsg.
 
 %--------------------------------------------------------------------------------------
 \section{Blinking a LED}
@@ -67,14 +69,14 @@ From the IDE interface, you can use \verb|File|, then \verb|Import...|, and then
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width=0.55\textwidth]{./img/import.png}
+  \includegraphics[width=.5\textwidth]{./img/import.png}
   \caption{Importing an existing project from the filesystem}
   \label{fig:import}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}[!h]
   \centering
-  \includegraphics[width=0.55\textwidth]{./img/project.png}
+  \includegraphics[width=.5\textwidth]{./img/project.png}
   \caption{Importing the nested GPIO projects}
   \label{fig:project}
 \end{figure}
@@ -86,16 +88,16 @@ As visible in the figure \ref{fig:toggle_led}, if you navigate around the line 9
 
 With this setup, you should be able to build the example and having the LD1 LED on the top of your Nucleo board to blink.
 
-\begin{figure}[h!]
+\begin{figure}[h]
   \centering
-  \includegraphics[width=0.9\textwidth]{./img/tree.png}
+  \includegraphics[width=.9\textwidth]{./img/tree.png}
   \caption{GPIO project structure}
   \label{fig:tree}
 \end{figure}
 
-\begin{figure}[h!]
+\begin{figure}[!h]
   \centering
-  \includegraphics[width=0.9\textwidth]{./img/toggle_led.png}
+  \includegraphics[width=.9\textwidth]{./img/toggle_led.png}
   \caption{``while'' loop with the toggling timing for the LD1 LED}
   \label{fig:toggle_led}
 \end{figure}
@@ -138,10 +140,11 @@ sudo docker exec -it ros_build bash
 \end{tcolorbox}
 
 
-From inside the container, we can follow the micro-ROS wiki guide, as to have two micro-ROS nodes that can run a default ``ping-pong'' application, as a proof that the system works and that the instances are able to communicated with each other.
+From inside the container, we can follow the micro-ROS wiki guide, as to have two micro-ROS nodes that can run a default ``ping-pong'' application, as a proof that the system works and that the instances are able to communicated with each other.\\
+The following command list will pull the required firmware, build it, then build, setup and run the agents inside you Docker container:
 \begin{tcolorbox}
 \begin{verbatim}
-. /opt/ros/$ROS_DISTRO/setup.bash
+. /opt/ros/$ROS_DISTRO/setup.\verb|bash|
 
 mkdir microros_ws
 cd microros_ws
@@ -169,16 +172,40 @@ ros2 run micro_ros_agent micro_ros_agent udp4 --port 8888
 \end{verbatim}
 \end{tcolorbox}
 
+Once your agent is running, you can open another terminal in your Docker (similarly to what was presented above: \verb|sudo docker exec -it ros_build bash|), and run the following commands to start the micro-ROS pingpong app:
+\begin{tcolorbox}
+\begin{verbatim}
+. /opt/ros/$ROS_DISTRO/setup.bash
+. ./install/local_setup.bash
+
+export RMW_IMPLEMENTATION=rmw_microxrcedds
+
+ros2 run micro_ros_demos_rclc ping_pong
+\end{verbatim}
+\end{tcolorbox}
+
+Then in yet another terminal, you can \verb|bash| into your container and run the following commands to actually test the running pingpong application:
+\begin{tcolorbox}
+\begin{verbatim}
+. /opt/ros/$ROS_DISTRO/setup.bash
+
+ros2 topic echo /microROS/ping
+\end{verbatim}
+\end{tcolorbox}
+
+If you see some nanosec timestamp with a \verb|frame_id| value, you are doing it right !
+
 \subsection{micro-ROS on a microcontroller}
 \label{sec:micro-ros-micr}
 Now we know that we can build micro-ROS agents, the goal is to build a firmware for our Nucleo board that can talk to our PC via serial.
-This should be possible following the \href{https://micro.ros.org/docs/tutorials/core/first_application_rtos/freertos/}{official guide} since the board is \href{https://micro.ros.org/docs/overview/hardware/}{officially supported}.
+This should be possible following the \href{https://micro.ros.org/docs/tutorials/core/first_application_rtos/freertos/}{official guide} since the board is \href{https://micro.ros.org/docs/overview/hardware/}{officially supported}.\\
 
 
+Similarly to the previous section, we will \verb|bash| into our ROS2 Docker. From here, we can  pull the firmware for the STM32 boards and run the setup scrips:
 \begin{tcolorbox}
 \begin{verbatim}
-git clone -b \
-    galactic https://github.com/micro-ROS/micro_ros_stm32cubemx_utils.git \
+git clone -b galactic \
+    https://github.com/micro-ROS/micro_ros_stm32cubemx_utils.git \
     /project
 
 ros2 run micro_ros_setup create_firmware_ws.sh freertos nucleo_f746zg
@@ -204,6 +231,34 @@ It is also an option to mount this device from inside a Docker, for example with
 \begin{verbatim}
 mkdir /tmp/nucleo
 mount /dev/sda /tmp/nucleo
+\end{verbatim}
+\end{tcolorbox}
+
+We can then upload the firmware to the board by moving the \verb|.bin| to the mounted volume:
+\begin{tcolorbox}
+\begin{verbatim}
+cp firmware/freertos_apps/microros_nucleo_f746zg_extensions/build/micro-ROS.bin /tmp/nucleo/
+\end{verbatim}
+\end{tcolorbox}
+
+Now the firmware is flashed, we can create, build, setup the agent, run the app (remotely, through the \verb|/dev/ttyACME0|):
+\begin{tcolorbox}
+\begin{verbatim}
+ros2 run micro_ros_setup create_agent_ws.sh
+
+ros2 run micro_ros_setup build_agent.sh
+. ./install/local_setup.bash
+
+ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyACM0
+\end{verbatim}
+\end{tcolorbox}
+
+Finally, for testing this application, you can bash into the Docker from another term and run these:
+\begin{tcolorbox}
+\begin{verbatim}
+. /opt/ros/$ROS_DISTRO/setup.bash
+
+ros2 topic echo /microROS/ping
 \end{verbatim}
 \end{tcolorbox}
 
