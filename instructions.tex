@@ -205,23 +205,27 @@ Similarly to the previous section, we will \verb|bash| into our ROS2 Docker. Fro
 \begin{tcolorbox}
 \begin{verbatim}
 git clone -b galactic \
-    https://github.com/micro-ROS/micro_ros_stm32cubemx_utils.git \
-    /project
+https://github.com/micro-ROS/micro_ros_stm32cubemx_utils.git \
+/project
 
-ros2 run micro_ros_setup create_firmware_ws.sh freertos nucleo_f746zg
+ros2 run micro_ros_setup create_firmware_ws.sh \
+freertos nucleo_f746zg
 
-ros2 run micro_ros_setup configure_firmware.sh ping_pong --transport serial
+ros2 run micro_ros_setup configure_firmware.sh \
+ping_pong --transport serial
 
 ros2 run micro_ros_setup build_firmware.sh
 
-cp firmware/freertos_apps/microros_nucleo_f746zg_extensions/build/micro-ROS.bin /tmp/nucleo/
+cp firmware/freertos_apps/microros_nucleo_f746zg_extensions/\
+build/micro-ROS.bin /tmp/nucleo/
 \end{verbatim}
 \end{tcolorbox}
 
 Now to have the local agent connecting to the topic, you can run the following command, and then plug-out and plug-in the usb cable:
 \begin{tcolorbox}
 \begin{verbatim}
-ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyACM0
+ros2 run micro_ros_agent micro_ros_agent serial\
+ --dev /dev/ttyACM0
 \end{verbatim}
 \end{tcolorbox}
 
@@ -237,7 +241,9 @@ mount /dev/sda /tmp/nucleo
 We can then upload the firmware to the board by moving the \verb|.bin| to the mounted volume:
 \begin{tcolorbox}
 \begin{verbatim}
-cp firmware/freertos_apps/microros_nucleo_f746zg_extensions/build/micro-ROS.bin /tmp/nucleo/
+cp firmware/freertos_apps/\
+microros_nucleo_f746zg_extensions/build/micro-ROS.bin \
+/tmp/nucleo/
 \end{verbatim}
 \end{tcolorbox}
 
@@ -249,7 +255,8 @@ ros2 run micro_ros_setup create_agent_ws.sh
 ros2 run micro_ros_setup build_agent.sh
 . ./install/local_setup.bash
 
-ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyACM0
+ros2 run micro_ros_agent micro_ros_agent serial \
+--dev /dev/ttyACM0
 \end{verbatim}
 \end{tcolorbox}
 
