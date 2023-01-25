@@ -30,7 +30,7 @@
 \pagebreak
 %--------------------------------------------------------------------------------------
 \section{Introduction and motivation}
-Being a widely available board from ST and with an official support for micro-ROS, the Nucleo-144 is a great board as an intermediate step on the journey to have a ROS2 ecosystem running on a system like the \href{https://gitlab.com/nitrogen8m/documentation}{Nitrogen8M} with an heterogeneous cores setup.\\
+Being a widely available board from ST and with an official support for micro-ROS, the \href{https://www.st.com/en/evaluation-tools/nucleo-f429zi.html}{Nucleo-144} is a great board as an intermediate step on the journey to have a ROS2 ecosystem running on a system like the \href{https://gitlab.com/nitrogen8m/documentation}{Nitrogen8M} with an heterogeneous cores setup.\\
 Running a micro-ROS instance on this board is a useful goal in the overall project, as it will
 allow me to test the ``standard'' use-case of that technology.\\
 Later on, the goal will be to be able to run the DDS system over RPMsg.
@@ -144,7 +144,7 @@ From inside the container, we can follow the micro-ROS wiki guide, as to have tw
 The following command list will pull the required firmware, build it, then build, setup and run the agents inside you Docker container:
 \begin{tcolorbox}
 \begin{verbatim}
-. /opt/ros/$ROS_DISTRO/setup.\verb|bash|
+. /opt/ros/$ROS_DISTRO/setup.bash
 
 mkdir microros_ws
 cd microros_ws
@@ -201,12 +201,20 @@ Now we know that we can build micro-ROS agents, the goal is to build a firmware 
 This should be possible following the \href{https://micro.ros.org/docs/tutorials/core/first_application_rtos/freertos/}{official guide} since the board is \href{https://micro.ros.org/docs/overview/hardware/}{officially supported}.\\
 
 
-Similarly to the previous section, we will \verb|bash| into our ROS2 Docker. From here, we can  pull the firmware for the STM32 boards and run the setup scrips:
+Similarly to the previous section, we will \verb|bash| into our ROS2 Docker. From here, we can  pull the firmware for the STM32 boards and run the setup scrips, so from a fresh ROS2 Docker, you can run:
 \begin{tcolorbox}
 \begin{verbatim}
-git clone -b galactic \
-https://github.com/micro-ROS/micro_ros_stm32cubemx_utils.git \
-/project
+. /opt/ros/$ROS_DISTRO/setup.bash
+mkdir microros_ws
+cd microros_ws
+git clone -b $ROS_DISTRO \
+    https://github.com/micro-ROS/micro_ros_setup.git \
+    src/micro_ros_setup
+
+sudo apt update && rosdep update
+rosdep install --from-paths src --ignore-src -y
+sudo apt-get -y install python3-pip wget nano
+
 
 ros2 run micro_ros_setup create_firmware_ws.sh \
 freertos nucleo_f746zg
@@ -216,19 +224,103 @@ ping_pong --transport serial
 
 ros2 run micro_ros_setup build_firmware.sh
 
-cp firmware/freertos_apps/microros_nucleo_f746zg_extensions/\
-build/micro-ROS.bin /tmp/nucleo/
+ros2 run micro_ros_setup flash_firmware.sh
+\end{verbatim}
+\end{tcolorbox}
+Note that it is possible to flash the binary directly, as shown in the appendix \ref{appendix:nucl-filesyst-from}.\\
+
+We can then create the agent for the ROS2 that lives inside the container:
+\begin{tcolorbox}
+\begin{verbatim}
+ros2 run micro_ros_setup create_agent_ws.sh
+ros2 run micro_ros_setup build_agent.sh
+. ./install/local_setup.bash
 \end{verbatim}
 \end{tcolorbox}
 
-Now to have the local agent connecting to the topic, you can run the following command, and then plug-out and plug-in the usb cable:
+We have to get the local agent connecting to the topic, you can run (remotely, through the \verb|/dev/ttyACME0|) the firmware with the following command, and then plug-out and plug-in the usb cable:
 \begin{tcolorbox}
 \begin{verbatim}
 ros2 run micro_ros_agent micro_ros_agent serial \
 --dev /dev/ttyACM0
 \end{verbatim}
 \end{tcolorbox}
+In that case, the unplug-plug situation is needed for the agent to be able to subscribe to the topic.\\
 
+Finally, for testing this application, you can bash into the Docker from another term and run these:
+\begin{tcolorbox}
+\begin{verbatim}
+. /opt/ros/$ROS_DISTRO/setup.bash
+
+ros2 topic echo /microROS/ping
+\end{verbatim}
+\end{tcolorbox}
+As stated in the official wiki: "At this point, we know that our micro-ROS app is publishing pings. ".\\
+
+A slightly more complex setup is required to check the ``pong'', see if our micro-ROS app can receive and reply to messages.\\
+Firstly, we will need three terminals with a bash session running in our Docker. As a reminder, this can be done as follow. You'll also need to have the \verb|setup.bash| in your path for each bash instance:
+\begin{tcolorbox}
+\begin{verbatim}
+sudo docker exec -it ros_build bash
+. /opt/ros/$ROS_DISTRO/setup.bash
+\end{verbatim}
+\end{tcolorbox}
+
+Now, for each terminal opend.\\
+You will need one that receive the pings form the Nucleo:
+\begin{tcolorbox}
+\begin{verbatim}
+ros2 topic echo /microROS/ping
+\end{verbatim}
+\end{tcolorbox}
+
+A second one that receive the pongs:
+\begin{tcolorbox}
+\begin{verbatim}
+ros2 topic echo /microROS/pong
+\end{verbatim}
+\end{tcolorbox}
+
+And the third one will publish fake pings, so the Nucleo board will reply with a ping:
+\begin{tcolorbox}
+\begin{verbatim}
+ros2 topic pub --once /microROS/ping std_msgs/msg/Header \
+'{frame_id: "fake_ping"}'ros2 topic pub \
+--once /microROS/ping std_msgs/msg/Header \
+'{frame_id: "fake_ping"}'
+\end{verbatim}
+\end{tcolorbox}
+
+Running the command form the third term will show the fake ping in the second, but most critically, we will be able to see the pong, among the pings, in the first term, showing that our board is able to receive and reply to topics ! This result is visible in the figure \ref{fig:pingpong} below.
+
+
+\begin{figure}[!h]
+  \centering
+  \includegraphics[width=.9\textwidth]{./img/pingpong.png}
+  \caption{The ``fake ping'' pong return from the Nucleo board back to the Docker ROS2 instance, among it's normal pings.}
+  \label{fig:pingpong}
+\end{figure}
+
+\subsection{=TODO= Sources for the Nucleo's micro-ROS firmware}
+\label{sec:sourc-nucl-micro}
+A specific set of configuration files for our board is available at this \href{https://github.com/micro-ROS/micro_ros_setup/tree/humble/config/freertos/nucleo_f746zg}{GitHub link}.\\
+It should gives us more information on the way the firmware is built.
+
+
+\subsection{=TODO= Usage with N8M}
+\label{sec:usage-with-n8m}
+As the micro-ROS deployed system appear to work properly,it will become interesting
+to make the board able to ``talk'' with my other Nitrogen8M ROS2 deployment.\\
+
+This is a good exercise to see if everything works as expected, especially at
+the DDS level.
+
+% --------------------------------------------------------------------------------------
+\pagebreak
+\appendix
+
+\section{Nucleo filesystem from a container}
+\label{appendix:nucl-filesyst-from}
 It is possible to view the Nucleo board as a mountable volume by plugging in the \verb|USB PWR| port to your machine. The \verb|/dev/sdX| will be mounted as something similar to \verb|/media/user/NODE_F746ZG|.\\
 It is also an option to mount this device from inside a Docker, for example with the following:
 \begin{tcolorbox}
@@ -247,35 +339,7 @@ microros_nucleo_f746zg_extensions/build/micro-ROS.bin \
 \end{verbatim}
 \end{tcolorbox}
 
-Now the firmware is flashed, we can create, build, setup the agent, run the app (remotely, through the \verb|/dev/ttyACME0|):
-\begin{tcolorbox}
-\begin{verbatim}
-ros2 run micro_ros_setup create_agent_ws.sh
-
-ros2 run micro_ros_setup build_agent.sh
-. ./install/local_setup.bash
-
-ros2 run micro_ros_agent micro_ros_agent serial \
---dev /dev/ttyACM0
-\end{verbatim}
-\end{tcolorbox}
-
-Finally, for testing this application, you can bash into the Docker from another term and run these:
-\begin{tcolorbox}
-\begin{verbatim}
-. /opt/ros/$ROS_DISTRO/setup.bash
-
-ros2 topic echo /microROS/ping
-\end{verbatim}
-\end{tcolorbox}
-
-\subsection{=TODO= Usage with N8M}
-\label{sec:usage-with-n8m}
-As the micro-ROS deployed system appear to work properly,it will become interesting
-to make the board able to ``talk'' with my other Nitrogen8M ROS2 deployment.\\
-
-This is a good exercise to see if everything works as expected, especially at
-the DDS level.
+However, this is not really needed, as the \verb|flash_firmware.sh| script provided for the board seems to work properly.
 
 
 \end{document}
