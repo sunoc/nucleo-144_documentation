@@ -104,7 +104,7 @@ With this setup, you should be able to build the example and having the LD1 LED 
 
 \pagebreak
 % --------------------------------------------------------------------------------------
-\section{micro-ROS}
+\section{Setting up micro-ROS}
 \label{sec:micro-ros}
 Now we have a minimal project running on our Nucleo board, it's time to try, deploy and run a micro-ROS instance.
 Deploying micro-ROS on a microcontroller is not a trivial task, as the firmware that is meant to be compiled and sent over must contain at least:
@@ -266,7 +266,7 @@ sudo docker exec -it ros_build bash
 \end{verbatim}
 \end{tcolorbox}
 
-Now, for each terminal opend.\\
+Now, for each terminal opened.\\
 You will need one that receive the pings form the Nucleo:
 \begin{tcolorbox}
 \begin{verbatim}
@@ -302,20 +302,86 @@ Running the command form the third term will show the fake ping in the second, b
 \end{figure}
 
 
-\subsection{Blinking a LED (again)}
+%--------------------------------------------------------------------------------------
+\section{Blinking a LED (again)}
 \label{sec:blinking-led-again}
 As an extra proof that we correctly deployed the ``pingpong'' app on the Nucleo board, and in order to get used to modifying micro-ROS app, we made the pinging tasks also toggling LEDs on the board.\\
 
-The \href{https://gitlab.com/nucleo-144/documentation/-/blob/main/src/ping_pong.c}{C file} is available in this repository.
-
-
-\subsection{=TODO= Sources for the Nucleo's micro-ROS firmware}
+\subsection{Sources for the Nucleo's micro-ROS firmware}
 \label{sec:sourc-nucl-micro}
 A specific set of configuration files for our board is available at this \href{https://github.com/micro-ROS/micro_ros_setup/tree/humble/config/freertos/nucleo_f746zg}{GitHub link}.\\
-It should gives us more information on the way the firmware is built.
+However, this structure is really a general configuration for the building process for our board firmware. It turned out to be more useful to directly check the sources available that are use to build the apps.\\
+This can be found inside the Docker, for what we are looking for: the code of the \verb|ping_pong| app:
+\begin{tcolorbox}
+\begin{verbatim}
+./microros_ws/firmware/freertos_apps/apps/ping_pong/app.c
+\end{verbatim}
+\end{tcolorbox}
+
+For other important files, we can note the path of the HAL library. This is crucial since this library is used by the STM32 boards to interact with the GPIO and needs to be loaded in your C code. Here is the path:
+\begin{tcolorbox}
+\begin{verbatim}
+./microros/firmware/freertos_apps/microros_nucleo_\
+f746zg_extensions/Drivers/STM32F7xx_HAL_Driver/\
+Src/stm32f7xx_hal_gpio.c
+\end{verbatim}
+\end{tcolorbox}
+
+\subsection{Modifying the firmware}
+\label{sec:modifying-firmware}
+The \href{https://gitlab.com/nucleo-144/documentation/-/blob/main/src/ping_pong.c}{C file} is available in this repository. It is a copy of the \verb|ping_pong| application C source and is to be modified to be able to drive some GPIOs.\\
+
+Here are the key parts that were modified to be able to make it happen.\\
+
+Firstly, we need the to include the HAL lib, as stated in the section \ref{sec:sourc-nucl-micro}:
+\begin{tcolorbox}
+\begin{verbatim}
+#include "stm32f7xx_hal.h"
+\end{verbatim}
+\end{tcolorbox}
+
+Since it is used later, we can setup this \verb|InitStruct| as a global static variable:
+\begin{tcolorbox}
+\begin{verbatim}
+static GPIO_InitTypeDef  GPIO_InitStruct;
+\end{verbatim}
+\end{tcolorbox}
+
+Then, going in the \verb|void appMain| function, we need to initialize and setup the HAL and GPIO setup:
+\begin{tcolorbox}
+\begin{verbatim}
+HAL_Init();
+
+__HAL_RCC_GPIOB_CLK_ENABLE();
+
+GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
+GPIO_InitStruct.Pull  = GPIO_PULLUP;
+GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+
+GPIO_InitStruct.Pin = GPIO_PIN_0;
+HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+GPIO_InitStruct.Pin = GPIO_PIN_7;
+HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+\end{verbatim}
+\end{tcolorbox}
+
+Finally, we can call the \verb|Toggle| functions in the callback function for the ROS topics. In this case we are toggling the GPIO pin 0 (LD1) when a ping in send and the GPIO pin 7 (LD2) when a pong is sent (thus a ping is received).
+It might also be interresting to send some status of the GPIO, which is what is done here in the \verb|sprintf| function.\\
+The C below shows the two modifications for the \verb|void ping_timer_callback| function:
+\begin{tcolorbox}
+\begin{verbatim}
+sprintf(outcoming_ping.frame_id.data,
+     "Device ID: %d, GPIO: %d",
+     device_id, HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_0));
+/* Toggles the LD1 when we ping */
+HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
+\end{verbatim}
+\end{tcolorbox}
 
 
-\subsection{=TODO= Usage with N8M}
+%--------------------------------------------------------------------------------------
+\section{=TODO= Usage with N8M}
 \label{sec:usage-with-n8m}
 As the micro-ROS deployed system appear to work properly,it will become interesting
 to make the board able to ``talk'' with my other Nitrogen8M ROS2 deployment.\\
