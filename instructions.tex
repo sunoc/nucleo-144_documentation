@@ -287,10 +287,8 @@ ros2 topic echo /microROS/pong
 And the third one will publish fake pings, so the Nucleo board will reply with a ping:
 \begin{tcolorbox}
 \begin{verbatim}
-ros2 topic pub --once /microROS/ping std_msgs/msg/Header \
-'{frame_id: "fake_ping"}'ros2 topic pub \
---once /microROS/ping std_msgs/msg/Header \
-'{frame_id: "fake_ping"}'
+ros2 topic pub --once /microROS/ping \
+std_msgs/msg/Header '{frame_id: "fake_ping"}'
 \end{verbatim}
 \end{tcolorbox}
 
@@ -383,7 +381,8 @@ HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
 \end{tcolorbox}
 
 
-%--------------------------------------------------------------------------------------
+% --------------------------------------------------------------------------------------
+\pagebreak
 \section{=TODO= Usage with N8M}
 \label{sec:usage-with-n8m}
 As the micro-ROS deployed system appear to work properly,it will become interesting
@@ -391,6 +390,54 @@ to make the board able to ``talk'' with my other Nitrogen8M ROS2 deployment.\\
 
 This is a good exercise to see if everything works as expected, especially at
 the DDS level.
+
+\subsection{Deploying ROS2 on N8M}
+\label{sec:deploying-ros2-n8m}
+This step for having a clean installation of ROS2 on the Nitrogen8M board is detailed \href{https://gitlab.com/nitrogen8m/documentation/}{in my other guide about the board}, in the Section 5.
+
+\subsection{Micro-ROS agent on the Nitrogen8M}
+\label{sec:micro-ros-agent}
+Once we have a ROS2 environment configured on our Nitrogen8M board, we need to install the tool for having the micro-ROS agent ready.\\
+This requires a bit more work than in the docker example, since the one we have now is not prepared to build\footnote{Building the agent uses a lot of RAM, and the 2GB available on the board is not enough. A presented in the appendix \ref{sec:adding-swap-part}, you should add and enable a swap partition.} run micro-ROS agent, thus more steps are needed, as seen next:
+\begin{tcolorbox}
+\begin{verbatim}
+ROS_DISTRO=humble
+source /opt/ros/$ROS_DISTRO/setup.bash
+
+mkdir microros_ws
+cd microros_ws
+git clone -b $ROS_DISTRO \
+    https://github.com/micro-ROS/micro_ros_setup.git \
+    src/micro_ros_setup
+
+sudo mkdir -p /etc/ros/rosdep/sources.list.d
+wget https://raw.githubusercontent.com/ros/rosdistro/\
+master/rosdep/sources.list.d/20-default.list
+
+sudo apt update && rosdep update
+rosdep install --from-paths src --ignore-src -y
+sudo apt-get -y install python3-pip wget nano
+
+colcon build
+source ./install/local_setup.bash
+
+ros2 run micro_ros_setup create_agent_ws.sh
+ros2 run micro_ros_setup build_agent.sh
+source ./install/local_setup.bash
+
+ros2 run micro_ros_agent micro_ros_agent serial \
+--dev /dev/ttyACM0
+\end{verbatim}
+\end{tcolorbox}
+
+And as usual, we can then open another terminal to the N8M board and run the following commands to echo the pings from the Nucleo board:
+\begin{tcolorbox}
+\begin{verbatim}
+source /opt/ros/$ROS_DISTRO/setup.bash
+
+ros2 topic echo /microROS/ping
+\end{verbatim}
+\end{tcolorbox}
 
 % --------------------------------------------------------------------------------------
 \pagebreak
@@ -417,6 +464,11 @@ microros_nucleo_f746zg_extensions/build/micro-ROS.bin \
 \end{tcolorbox}
 
 However, this is not really needed, as the \verb|flash_firmware.sh| script provided for the board seems to work properly.
+
+\section{=TODO= Adding a swap partition}
+\label{sec:adding-swap-part}
+
+
 
 
 \end{document}
