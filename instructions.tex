@@ -49,13 +49,11 @@ configured to upload a firmware to the board.
 
 \subsection{STM32CubeIDE}
 \label{sec:stm32cubeide}
-Similarly to what presented in \href{https://gitlab.com/stm32mp157f-dk2/documentation}{my documentation for the STM32MP157F board}, the current Nucleo board projects can also be edited and loaded through serial connection from the \href{https://www.st.com/en/development-tools/stm32cubeide.html}{STM32 Cube IDE}. This tool has the advantage of being directly provided by ST and having a lot of available functionality for building and debugging project, however, such project are extremely inconvenient to move and are close to impossible to port.\\
-
-Regardless, this is way we shall take for this guide, so as visible on the figure \ref{fig:ide} we are going to use the tool provided by ST to build and upload the firmware for our Nucleo board. The link in the previous paragraph explains how to install it.
+Similarly to what presented in \href{https://gitlab.com/stm32mp157f-dk2/documentation}{my documentation for the STM32MP157F board}, the current Nucleo board projects can also be edited and loaded through serial connection from the \href{https://www.st.com/en/development-tools/stm32cubeide.html}{STM32 Cube IDE}. This tool has the advantage of being directly provided by ST and having a lot of available functionality for building and debugging project, however, such project are extremely inconvenient to move and are close to impossible to port. Regardless, this is way we shall take for this guide, so as visible on the figure \ref{fig:ide} we are going to use the tool provided by ST to build and upload the firmware for our Nucleo board. The link in the previous paragraph explains how to install it.
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width=0.8\textwidth]{./img/ide.png}
+  \includegraphics[width=0.85\textwidth]{./img/ide.png}
   \caption{The STM Cube IDE view, with a project opened}
   \label{fig:ide}
 \end{figure}
@@ -385,11 +383,10 @@ HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
 
 % --------------------------------------------------------------------------------------
 \pagebreak
-\section{=TODO= Usage with N8M}
+\section{Usage with N8M}
 \label{sec:usage-with-n8m}
 As the micro-ROS deployed system appear to work properly,it will become interesting
-to make the board able to ``talk'' with my other Nitrogen8M ROS2 deployment.\\
-
+to make the board able to ``talk'' with my other Nitrogen8M ROS2 deployment.
 This is a good exercise to see if everything works as expected, especially at
 the DDS level.
 
@@ -399,7 +396,7 @@ This step for having a clean installation of ROS2 on the Nitrogen8M board is det
 
 \subsection{Micro-ROS agent on the Nitrogen8M}
 \label{sec:micro-ros-agent}
-Once we have a ROS2 environment configured on our Nitrogen8M board, we need to install the tool for having the micro-ROS agent ready.\\
+Once we have a ROS2 environment configured on our Nitrogen8M board, we need to install the tool for having the micro-ROS agent ready.
 This requires a bit more work than in the docker example, since the one we have now is not prepared to build\footnote{Building the agent uses a lot of RAM, and the 2GB available on the board is not enough. A presented in the appendix \ref{appendix:adding-swap-part}, you should add and enable a swap partition.} run micro-ROS agent, thus more steps are needed, as seen next:
 \begin{tcolorbox}
 \begin{verbatim}
@@ -422,17 +419,17 @@ sudo apt-get -y install python3-pip wget nano
 
 colcon build
 source ./install/local_setup.bash
-
 ros2 run micro_ros_setup create_agent_ws.sh
 ros2 run micro_ros_setup build_agent.sh
 source ./install/local_setup.bash
-
 ros2 run micro_ros_agent micro_ros_agent serial \
 --dev /dev/ttyACM0
 \end{verbatim}
 \end{tcolorbox}
 
-And as usual, we can then open another terminal to the N8M board and run the following commands to echo the pings from the Nucleo board:
+With the agent running (again, if the handshake for the topic being subscribed to does not happen, you should try to plug out and plug in back the Nucleo board(s) USB cable), you can now try to have the Nucleo boards communicating with the Cortex A53 running Linux and ROS2.\\
+
+As usual, we can then open another terminal to the N8M board and run the following commands to echo the pings from the Nucleo board:
 \begin{tcolorbox}
 \begin{verbatim}
 source /opt/ros/$ROS_DISTRO/setup.bash
@@ -440,6 +437,16 @@ source /opt/ros/$ROS_DISTRO/setup.bash
 ros2 topic echo /microROS/ping
 \end{verbatim}
 \end{tcolorbox}
+
+If everything goes the right way, you should be able to see the pings from the board that are connected. If the LED modification was made, the blink should also happen, and if you have two Nucleo boards connected, they should be able to ping each other, blinking each other's ping and pong assigned LEDs. This is a proof of the resilience of the DDS setup, and a good way to see that everything works as expected.
+
+% --------------------------------------------------------------------------------------
+\section{Conclusion}
+\label{sec:conclusion}
+Now we were able to test a working micro-ROS - ROS2 environment, the next step will be to run micro-ROS on the Nitrogen8m core M4 and being able to communicated with the Linux side through shared memory.\\
+
+These steps are core parts of my research project and will be discussed and presented in separated guides.
+
 
 % --------------------------------------------------------------------------------------
 \pagebreak
