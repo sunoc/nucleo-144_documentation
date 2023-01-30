@@ -465,9 +465,44 @@ microros_nucleo_f746zg_extensions/build/micro-ROS.bin \
 
 However, this is not really needed, as the \verb|flash_firmware.sh| script provided for the board seems to work properly.
 
-\section{=TODO= Adding a swap partition}
+% --------------------------------------------------------------------------------------
+\pagebreak
+\section{Adding a swap partition}
 \label{sec:adding-swap-part}
+This part is a copy from my \href{https://gitlab.com/nitrogen8m/documentation/}{own repository about the Nitrogen8M board}.\\
 
+For this additional guide, and as stated previously, we will consider that the goal here is to use the NVMe SSD, with it's adapter, to have a swap partition. We also consider that the SSD is empty or that the data on it can be erased. If it is not the case, please backup your data somewhere else, for example by using a NFS volume.\\
+
+Firstly, you'll need to delete the existing partition (if it exist), create the new partition, give it a size and assigning it the ``swap'' type.\\
+In the example below, we are creating a 8GB swap partition on the \verb|/dev/nvme0n1|:
+\begin{tcolorbox}
+\begin{verbatim}
+sudo fdisk /dev/nvme0n1
+p
+d
+p
+n
+p
+default
+default
++8G
+p
+t
+82
+w
+\end{verbatim}
+\end{tcolorbox}
+
+Then you can follow the next lines to state to Linux that the partition (in this case, the 2nd partition on the NVMe) is a swap, and finally setting up the \verb|fstab| so the swap can be started at boot. Reboot the device to test the whole setup:
+\begin{tcolorbox}
+\begin{verbatim}
+sudo sync
+sudo mkswap /dev/nvme0n1p2
+sudo su -c 'echo "/dev/nvme0n1p2 swap swap defaults 0 0" \
+>> /etc/fstab'
+sudo reboot now
+\end{verbatim}
+\end{tcolorbox}
 
 
 
