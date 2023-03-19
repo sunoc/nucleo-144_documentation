@@ -1,7 +1,7 @@
 #+title: Nucleo-144 documentation
 
 * Introduction
-Same instruction here for building that report as for my documentation for the Nitrogem8M board.
+The LaTeX report here presents the instruction and documentation for making the setup and using the Nitrogem8M board.
 
 * Build instructions
 On a moderately recent Ubuntu-base distribution, the following packages seemed to be required to build the
