@@ -3,6 +3,7 @@
 \usepackage{hyperref}
 \usepackage{graphicx}
 \usepackage{textgreek}
+\usepackage{float}
 
 % can create colorful boxes, for warning p.ex.
 \usepackage[most]{tcolorbox}
@@ -22,7 +23,7 @@
  
 \maketitle
 
-\begin{figure}[h]
+\begin{figure}[H]
   \centering
   \includegraphics[width=0.5\textwidth]{./img/board.png}
 \end{figure}
@@ -33,10 +34,10 @@
 \pagebreak
 %--------------------------------------------------------------------------------------
 \section{Introduction and motivation}
-Being a widely available board from ST and with an official support for micro-ROS, the \href{https://www.st.com/en/evaluation-tools/nucleo-f429zi.html}{Nucleo-144} is a great board as an intermediate step on the journey to have a ROS2 ecosystem running on a system like the \href{https://gitlab.com/nitrogen8m/documentation}{Nitrogen8M} with an heterogeneous cores setup.\\
+Being a widely available board from ST and with an official support for micro-ROS, the \href{https://www.st.com/en/evaluation-tools/nucleo-f429zi.html}{Nucleo-144} is a great board as an intermediate step on the journey to have a ROS2 ecosystem running on a system like the \href{https://gitlab.com/nitrogen8m/documentation}{Nitrogen8M} with an heterogeneous cores setup.
 Running a micro-ROS instance on this board is a useful goal in the overall project, as it will
-allow me to test the ``standard'' use-case of that technology.\\
-Later on, the goal will be to be able to run the DDS system over RPMsg.\\
+allow me to test the ``standard'' use-case of that technology.
+Later on, the goal will be to be able to run the DDS system over RPMsg.
 
 Note that throughout this guide, the board will be referred to as ``Nucleo'' or ``F7'', by the fact that it is based on a STM32F7* microcontroller\footnote{A very similar ``F4'' board was also tested, as presented in the appendix \ref{appendix:stm32f4}.}.
 
@@ -51,7 +52,7 @@ configured to upload a firmware to the board.
 \label{sec:stm32cubeide}
 Similarly to what presented in \href{https://gitlab.com/stm32mp157f-dk2/documentation}{my documentation for the STM32MP157F board}, the current Nucleo board projects can also be edited and loaded through serial connection from the \href{https://www.st.com/en/development-tools/stm32cubeide.html}{STM32 Cube IDE}. This tool has the advantage of being directly provided by ST and having a lot of available functionality for building and debugging project, however, such project are extremely inconvenient to move and are close to impossible to port. Regardless, this is way we shall take for this guide, so as visible on the figure \ref{fig:ide} we are going to use the tool provided by ST to build and upload the firmware for our Nucleo board. The link in the previous paragraph explains how to install it.
 
-\begin{figure}[h]
+\begin{figure}[H]
   \centering
   \includegraphics[width=0.85\textwidth]{./img/ide.png}
   \caption{The STM Cube IDE view, with a project opened}
@@ -61,7 +62,7 @@ Similarly to what presented in \href{https://gitlab.com/stm32mp157f-dk2/document
 \subsection{STM32F7 firmware package}
 \label{sec:stm32f7-firmw-pack}
 With the IDE ready to be used, we now have to get the firmware package for our board.
-Since the Nucleo board we have is running a STM32F processor, we will need the similarly named pack.\\
+Since the Nucleo board we have is running a STM32F processor, we will need the similarly named pack.
 
 The \href{https://www.st.com/content/st_com/en/products/embedded-software/mcu-mpu-embedded-software/stm32-embedded-software/stm32cube-mcu-mpu-packages/stm32cubef7.html}{STM32 cube F7 firmware package} is available at that link. Once the whole directory is download and decompressed, you can access all the template projects, navigating to the following directory (dependent on your actual version): \verb|./STM32Cube_FW_F7_vX.XX.X/Projects/STM32F746ZG-Nucleo/|. In particular, for our case as we want firstly to be able to blink an LED, we can navigate to further, into \verb|Examples/GPIO/GPIO_IOToggle|. This specific example is precisely what we want: a simple structure of a project that blinks the \verb|LED1| LED.
 
@@ -70,35 +71,35 @@ The \href{https://www.st.com/content/st_com/en/products/embedded-software/mcu-mp
 The project downloaded as the F7 firmware, named \verb|GPIO_IOToggle| can be loaded into the IDE.
 From the IDE interface, you can use \verb|File|, then \verb|Import...|, and then \verb|Existing Projects into Workspace|, as visible in the figure \ref{fig:import}. Then, as visible in the figure \ref{fig:project}, we can navigate to the \verb|GPIO_IOToggle| directory and open it as a project. You should have two nested project that can be imported here.
 
-\begin{figure}[h]
+\begin{figure}[H]
   \centering
   \includegraphics[width=.5\textwidth]{./img/import.png}
   \caption{Importing an existing project from the filesystem}
   \label{fig:import}
 \end{figure}
 
-\begin{figure}[!h]
+\begin{figure}[H]
   \centering
   \includegraphics[width=.5\textwidth]{./img/project.png}
   \caption{Importing the nested GPIO projects}
   \label{fig:project}
 \end{figure}
 
-The project being imported, we can now see it's structure in the explorer of the IDE (figure \ref{fig:tree}). It also becomes clear here too why these STM Cube IDE are problematic to handle: even for such a simple task like the LED blink, a whole structure of inclusions and library that are elsewhere are needed.\\
+The project being imported, we can now see it's structure in the explorer of the IDE (figure \ref{fig:tree}). It also becomes clear here too why these STM Cube IDE are problematic to handle: even for such a simple task like the LED blink, a whole structure of inclusions and library that are elsewhere are needed.
 
-However, with the Nucleo board plugged in the USB port of you computer, and by selecting the \verb|STM32746ZG| sub-project, you can build the example (hammer icon), and then run it (white arrow on a green dot icon).\\
-As visible in the figure \ref{fig:toggle_led}, if you navigate around the line 90 of the \verb|main.c| file, you will find a delay function that takes some milliseconds in entry parameter. By changing that value, you are able to check if the code you are building is indeed being uploaded to the board.\\
+However, with the Nucleo board plugged in the USB port of you computer, and by selecting the \verb|STM32746ZG| sub-project, you can build the example (hammer icon), and then run it (white arrow on a green dot icon).
+As visible in the figure \ref{fig:toggle_led}, if you navigate around the line 90 of the \verb|main.c| file, you will find a delay function that takes some milliseconds in entry parameter. By changing that value, you are able to check if the code you are building is indeed being uploaded to the board.
 
 With this setup, you should be able to build the example and having the LD1 LED on the top of your Nucleo board to blink.
 
-\begin{figure}[h]
+\begin{figure}[H]
   \centering
   \includegraphics[width=.9\textwidth]{./img/tree.png}
   \caption{GPIO project structure}
   \label{fig:tree}
 \end{figure}
 
-\begin{figure}[!h]
+\begin{figure}[H]
   \centering
   \includegraphics[width=.9\textwidth]{./img/toggle_led.png}
   \caption{``while'' loop with the toggling timing for the LD1 LED}
@@ -124,12 +125,11 @@ Furthermore, it is every more hard to debug such deployment, since a micro-ROS i
 \label{sec:local-linux-micro}
 The first step in the path of running micro-ROS, we should try to run a ping-pong application on my Linux machine.
 Some instructions for this particular task are given on \href{https://micro.ros.org/docs/tutorials/core/first_application_linux/}{micro-ROS website}.
-Alternatively, there is a \href{}{micro-ROS report prepared by Prof. Honda}, available in this very repository.\\
 
-In this section of the report about the Nucleo board, I will present a tested, combined step-by-step guide on how to accomplish this task.\\
+In this section of the report about the Nucleo board, I will present a tested, combined step-by-step guide on how to accomplish this task.
 
 Docker is used in both guides to have a controlled environment to build and run these test tools.
-It is then important to install it on your system (or even remotely). \href{https://docs.docker.com/engine/install/}{The official Docker documentation} is the way to go, and it depends on your operating system. Even on your desktop, the version you'd want is the ``server'' version, as it is more widely available and more lightweight. From here I will assume that you have a docker install handy.\\
+It is then important to install it on your system (or even remotely). \href{https://docs.docker.com/engine/install/}{The official Docker documentation} is the way to go, and it depends on your operating system. Even on your desktop, the version you'd want is the ``server'' version, as it is more widely available and more lightweight. From here I will assume that you have a docker install handy.
 
 
 The following commands will pull a ROS container, version \verb|foxy|, and name it \verb|ros_build|.
@@ -193,6 +193,7 @@ Then in yet another terminal, you can \verb|bash| into your container and run th
 . /opt/ros/$ROS_DISTRO/setup.bash
 
 ros2 topic echo /microROS/ping
+
 \end{verbatim}
 \end{tcolorbox}
 
@@ -201,7 +202,7 @@ If you see some nanosec timestamp with a \verb|frame_id| value, you are doing it
 \subsection{micro-ROS on a microcontroller}
 \label{sec:micro-ros-micr}
 Now we know that we can build micro-ROS agents, the goal is to build a firmware for our Nucleo board that can talk to our PC via serial.
-This should be possible following the \href{https://micro.ros.org/docs/tutorials/core/first_application_rtos/freertos/}{official guide} since the board is \href{https://micro.ros.org/docs/overview/hardware/}{officially supported}.\\
+This should be possible following the \href{https://micro.ros.org/docs/tutorials/core/first_application_rtos/freertos/}{official guide} since the board is \href{https://micro.ros.org/docs/overview/hardware/}{officially supported}.
 
 
 Similarly to the previous section, we will \verb|bash| into our ROS2 Docker. From here, we can  pull the firmware for the STM32 boards and run the setup scrips, so from a fresh ROS2 Docker, you can run:
@@ -230,7 +231,7 @@ ros2 run micro_ros_setup build_firmware.sh
 ros2 run micro_ros_setup flash_firmware.sh
 \end{verbatim}
 \end{tcolorbox}
-Note that it is possible to flash the binary directly, as shown in the appendix \ref{appendix:nucl-filesyst-from}.\\
+Note that it is possible to flash the binary directly, as shown in the appendix \ref{appendix:nucl-filesyst-from}.
 
 We can then create the agent for the ROS2 that lives inside the container:
 \begin{tcolorbox}
@@ -248,7 +249,7 @@ ros2 run micro_ros_agent micro_ros_agent serial \
 --dev /dev/ttyACM0
 \end{verbatim}
 \end{tcolorbox}
-In some cases, if the agent does not return messages about subscribing to topics, unplugging and re-plugging is needed for the agent to be able to subscribe to the topic.\\
+In some cases, if the agent does not return messages about subscribing to topics, unplugging and re-plugging is needed for the agent to be able to subscribe to the topic.
 
 Finally, for testing this application, you can bash into the Docker from another term and run these:
 \begin{tcolorbox}
@@ -258,9 +259,9 @@ Finally, for testing this application, you can bash into the Docker from another
 ros2 topic echo /microROS/ping
 \end{verbatim}
 \end{tcolorbox}
-As stated in the official wiki: "At this point, we know that our micro-ROS app is publishing pings. ".\\
+As stated in the official wiki: "At this point, we know that our micro-ROS app is publishing pings. ".
 
-A slightly more complex setup is required to check the ``pong'', see if our micro-ROS app can receive and reply to messages.\\
+A slightly more complex setup is required to check the ``pong'', see if our micro-ROS app can receive and reply to messages.
 Firstly, we will need three terminals with a bash session running in our Docker. As a reminder, this can be done as follow. You'll also need to have the \verb|setup.bash| in your path for each bash instance:
 \begin{tcolorbox}
 \begin{verbatim}
@@ -269,7 +270,7 @@ sudo docker exec -it ros_build bash
 \end{verbatim}
 \end{tcolorbox}
 
-Now, for each terminal opened.\\
+Now, for each terminal opened.
 You will need one that receive the pings form the Nucleo:
 \begin{tcolorbox}
 \begin{verbatim}
@@ -295,7 +296,7 @@ std_msgs/msg/Header '{frame_id: "fake_ping"}'
 Running the command form the third term will show the fake ping in the second, but most critically, we will be able to see the pong, among the pings, in the first term, showing that our board is able to receive and reply to topics ! This result is visible in the figure \ref{fig:pingpong} below.
 
 
-\begin{figure}[!h]
+\begin{figure}[H]
   \centering
   \includegraphics[width=.9\textwidth]{./img/pingpong.png}
   \caption{The ``fake ping'' pong return from the Nucleo board back to the Docker ROS2 instance, among it's normal pings.}
@@ -306,12 +307,12 @@ Running the command form the third term will show the fake ping in the second, b
 %--------------------------------------------------------------------------------------
 \section{Blinking a LED (again)}
 \label{sec:blinking-led-again}
-As an extra proof that we correctly deployed the ``pingpong'' app on the Nucleo board, and in order to get used to modifying micro-ROS app, we made the pinging tasks also toggling LEDs on the board.\\
+As an extra proof that we correctly deployed the ``pingpong'' app on the Nucleo board, and in order to get used to modifying micro-ROS app, we made the pinging tasks also toggling LEDs on the board.
 
 \subsection{Sources for the Nucleo's micro-ROS firmware}
 \label{sec:sourc-nucl-micro}
-A specific set of configuration files for our board is available at this \href{https://github.com/micro-ROS/micro_ros_setup/tree/humble/config/freertos/nucleo_f746zg}{GitHub link}.\\
-However, this structure is really a general configuration for the building process for our board firmware. It turned out to be more useful to directly check the sources available that are use to build the apps.\\
+A specific set of configuration files for our board is available at this \href{https://github.com/micro-ROS/micro_ros_setup/tree/humble/config/freertos/nucleo_f746zg}{GitHub link}.
+However, this structure is really a general configuration for the building process for our board firmware. It turned out to be more useful to directly check the sources available that are use to build the apps.
 This can be found inside the Docker, for what we are looking for: the code of the \verb|ping_pong| app:
 \begin{tcolorbox}
 \begin{verbatim}
@@ -330,9 +331,9 @@ Src/stm32f7xx_hal_gpio.c
 
 \subsection{Modifying the firmware}
 \label{sec:modifying-firmware}
-The \href{https://gitlab.com/nucleo-144/documentation/-/blob/main/src/ping_pong.c}{C file} is available in this repository. It is a copy of the \verb|ping_pong| application C source and is to be modified to be able to drive some GPIOs.\\
+The \href{https://gitlab.com/nucleo-144/documentation/-/blob/main/src/ping_pong.c}{C file} is available in this repository. It is a copy of the \verb|ping_pong| application C source and is to be modified to be able to drive some GPIOs.
 
-Here are the key parts that were modified to be able to make it happen.\\
+Here are the key parts that were modified to be able to make it happen.
 
 Firstly, we need the to include the HAL lib, as stated in the section \ref{sec:sourc-nucl-micro}:
 \begin{tcolorbox}
@@ -427,7 +428,7 @@ ros2 run micro_ros_agent micro_ros_agent serial \
 \end{verbatim}
 \end{tcolorbox}
 
-With the agent running (again, if the handshake for the topic being subscribed to does not happen, you should try to plug out and plug in back the Nucleo board(s) USB cable), you can now try to have the Nucleo boards communicating with the Cortex A53 running Linux and ROS2.\\
+With the agent running (again, if the handshake for the topic being subscribed to does not happen, you should try to plug out and plug in back the Nucleo board(s) USB cable), you can now try to have the Nucleo boards communicating with the Cortex A53 running Linux and ROS2.
 
 As usual, we can then open another terminal to the N8M board and run the following commands to echo the pings from the Nucleo board:
 \begin{tcolorbox}
@@ -443,7 +444,7 @@ If everything goes the right way, you should be able to see the pings from the b
 % --------------------------------------------------------------------------------------
 \section{Conclusion}
 \label{sec:conclusion}
-Now we were able to test a working micro-ROS - ROS2 environment, the next step will be to run micro-ROS on the Nitrogen8m core M4 and being able to communicated with the Linux side through shared memory.\\
+Now we were able to test a working micro-ROS - ROS2 environment, the next step will be to run micro-ROS on the Nitrogen8m core M4 and being able to communicated with the Linux side through shared memory.
 
 These steps are core parts of my research project and will be discussed and presented in separated guides.
 
@@ -477,9 +478,9 @@ However, this is not really needed, as the \verb|flash_firmware.sh| script provi
 \pagebreak
 \section{Adding a swap partition}
 \label{appendix:adding-swap-part}
-This part is a copy from my \href{https://gitlab.com/nitrogen8m/documentation/}{own repository about the Nitrogen8M board}.\\
+This part is a copy from my \href{https://gitlab.com/nitrogen8m/documentation/}{own repository about the Nitrogen8M board}.
 
-For this additional guide, and as stated previously, we will consider that the goal here is to use the NVMe SSD, with it's adapter, to have a swap partition. We also consider that the SSD is empty or that the data on it can be erased. If it is not the case, please backup your data somewhere else, for example by using a NFS volume.\\
+For this additional guide, and as stated previously, we will consider that the goal here is to use the NVMe SSD, with it's adapter, to have a swap partition. We also consider that the SSD is empty or that the data on it can be erased. If it is not the case, please backup your data somewhere else, for example by using a NFS volume.
 
 Firstly, you'll need to delete the existing partition (if it exist), create the new partition, give it a size and assigning it the ``swap'' type.\\
 In the example below, we are creating a 8GB swap partition on the \verb|/dev/nvme0n1|:
@@ -519,7 +520,7 @@ sudo reboot now
 \label{appendix:stm32f4}
 The figure \ref{fig:f4} below shows the two boards next to each other. The difference is usage are minimal and both were able to run the firmware almost the same way.
 
-\begin{figure}[h]
+\begin{figure}[H]
   \centering
   \includegraphics[width=.8\textwidth]{./img/f4.jpg}
   \caption{The STM32F4xx based board next to the F7xx used in this guide.}
