@@ -219,6 +219,8 @@ sudo apt update && rosdep update
 rosdep install --from-paths src --ignore-src -y
 sudo apt-get -y install python3-pip wget nano
 
+colcon build
+. ./install/local_setup.bash
 
 ros2 run micro_ros_setup create_firmware_ws.sh \
 freertos nucleo_f746zg
