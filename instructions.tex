@@ -132,12 +132,12 @@ Docker is used in both guides to have a controlled environment to build and run 
 It is then important to install it on your system (or even remotely). \href{https://docs.docker.com/engine/install/}{The official Docker documentation} is the way to go, and it depends on your operating system. Even on your desktop, the version you'd want is the ``server'' version, as it is more widely available and more lightweight. From here I will assume that you have a docker install handy.
 
 
-The following commands will pull a ROS container, version \verb|foxy|, and name it \verb|ros_build|.
+The following commands will pull a ROS container, version \verb|humble|, and name it \verb|ros_build|.
 Then, we can execute \verb|bash|, as a way to open a terminal to the ``inside'' of the container.
 \begin{tcolorbox}
 \begin{verbatim}
 sudo docker run -d --name ros_build -it --net=host -v \
-     /dev:/dev --privileged ros:foxy
+     /dev:/dev --privileged ros:humble
 sudo docker exec -it ros_build bash
 \end{verbatim}
 \end{tcolorbox}
